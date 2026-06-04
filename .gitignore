@@ -1,0 +1,26 @@
+# live runtime file
+printer.cfg
+
+# customer local override
+local/customer.cfg
+
+# generated backups / autosaves
+printer-*.cfg
+*.bak
+*.bkp
+*.tmp
+*~
+
+# editor / OS junk
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# runtime data
+logs/
+gcodes/
+database/
+timelapse/
+comms/
