@@ -2,7 +2,7 @@
 printer.cfg
 
 # customer local override
-local/customer.cfg
+local
 
 # generated backups / autosaves
 printer-*.cfg
