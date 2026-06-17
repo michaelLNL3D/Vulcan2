@@ -24,3 +24,9 @@ gcodes/
 database/
 timelapse/
 comms/
+
+# Claude / mex context files
+.mex/
+CLAUDE.md
+CLAUDE.local.md
+.claude/
