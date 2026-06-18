@@ -1,0 +1,18 @@
+/* LNL3D Mainsail branding polish.
+   Accent/dark base come from native Mainsail settings (see
+   docs/superpowers/plans/2026-06-17-mainsail-lnl3d-rebrand.md, Task 4).
+   Only the documented #nav-header selector is used here so it is
+   version-stable. Add inspected selectors in Task 5 if desired. */
+
+:root {
+  --lnl-gold: #FBB040;
+  --lnl-blue: #1B75BB;
+  --lnl-grey: #939598;
+}
+
+/* Brand the navigation header title in LNL3D gold. */
+#nav-header .v-toolbar__title {
+  color: var(--lnl-gold);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
