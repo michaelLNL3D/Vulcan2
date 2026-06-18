@@ -1,32 +1,34 @@
-/* LNL3D Mainsail branding polish (Mainsail 2.x / Vuetify 2).
-
-   The gold accent is forced here via Vuetify's standard theme utility
-   classes (.primary = background, .primary--text = text), scoped under
-   .v-application so it overrides Vuetify's injected stylesheet without
-   needing the in-app color picker. Dark mode + printer name remain
-   in-app settings. */
+/* LNL3D Mainsail branding (Mainsail 2.x / Vuetify 2).
+   Loaded by Mainsail as .theme/custom.css. Relative url() paths resolve
+   against this file's location (.theme/), so sibling images just work. */
 
 :root {
   --lnl-gold: #FBB040;
   --lnl-blue: #1B75BB;
   --lnl-grey: #939598;
+  --lnl-ink: #1b1b1d;
 }
 
-/* --- Gold accent (buttons, progress bars, sliders, switches) --- */
+/* --- Gold accent across the content UI (buttons, progress, sliders, tabs) --- */
 .v-application .primary {
   background-color: var(--lnl-gold) !important;
   border-color: var(--lnl-gold) !important;
 }
-
-/* --- Gold accent (active tabs, links, highlighted text/icons) --- */
 .v-application .primary--text {
   color: var(--lnl-gold) !important;
   caret-color: var(--lnl-gold) !important;
 }
 
-/* Brand the navigation header title in LNL3D gold. */
-#nav-header .v-toolbar__title {
-  color: var(--lnl-gold);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+/* --- Top bar: dark, with a single crisp gold hairline accent --- */
+header.topbar.v-app-bar {
+  border-bottom: 3px solid var(--lnl-gold) !important;
+}
+
+/* --- Signature: faint LNL maker's-mark watermark in the dark canvas --- */
+/* Cards are opaque, so this only whispers through the gutters. */
+.v-application {
+  background-color: #121212 !important;
+  background-image: url("lnl-watermark.png") !important;
+  background-repeat: repeat !important;
+  background-attachment: fixed !important;
 }
