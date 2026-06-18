@@ -53,11 +53,21 @@ repo a pristine git checkout, so software updates keep working untouched.
 All `.theme/` files are optional and loaded only if present, per Mainsail's
 custom-theme contract.
 
-### B. `custom.css` — what it overrides
+### B. Accent color — native setting, not CSS
 
-- `--primary` accent → gold `#FBB040` (re-tints buttons, progress bars, active
-  tabs, sliders, toggles).
-- Secondary/link/highlight accents → blue `#1B75BB`.
+Mainsail compiles its accent via Vuetify, so the gold primary is applied
+through Mainsail's **native primary-color picker** (stored in Moonraker's DB —
+no repo touched), which re-tints buttons, progress bars, active tabs, sliders,
+and toggles app-wide. `custom.css` is reserved for branding polish the picker
+cannot reach, using only documented-safe selectors.
+
+### B2. `custom.css` — branding polish
+
+- Brand the nav-header title in gold via the documented selector
+  `#nav-header .v-toolbar__title`.
+- Define brand CSS variables (`--lnl-gold`, `--lnl-blue`, `--lnl-grey`).
+- Any deeper re-tint is added only after inspecting real selectors on the
+  running app (avoids guessing compiled Vuetify class names).
 - Dark surface refinements: app background `#1b1b1d`, cards/panels `#26262a`,
   borders/dividers tuned to the LNL grey family.
 - Ensure gold accent meets readable contrast on dark surfaces (gold text only on
@@ -83,8 +93,8 @@ rename surface in Mainsail:
 1. Settings → set theme to **Dark**.
 2. Settings → General → Printer display name → **"LNL3D Vulcan2"**
    (this drives the browser tab title and the sidebar heading).
-3. Confirm primary color shows as gold (custom.css enforces it; the UI color
-   picker may be left at default since CSS wins).
+3. Settings → primary color picker → set to gold `#FBB040` (source of truth
+   for the accent; custom.css only adds the nav-header polish).
 
 ## Asset Production Plan
 
