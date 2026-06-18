@@ -1,13 +1,27 @@
-/* LNL3D Mainsail branding polish.
-   Accent/dark base come from native Mainsail settings (see
-   docs/superpowers/plans/2026-06-17-mainsail-lnl3d-rebrand.md, Task 4).
-   Only the documented #nav-header selector is used here so it is
-   version-stable. Add inspected selectors in Task 5 if desired. */
+/* LNL3D Mainsail branding polish (Mainsail 2.x / Vuetify 2).
+
+   The gold accent is forced here via Vuetify's standard theme utility
+   classes (.primary = background, .primary--text = text), scoped under
+   .v-application so it overrides Vuetify's injected stylesheet without
+   needing the in-app color picker. Dark mode + printer name remain
+   in-app settings. */
 
 :root {
   --lnl-gold: #FBB040;
   --lnl-blue: #1B75BB;
   --lnl-grey: #939598;
+}
+
+/* --- Gold accent (buttons, progress bars, sliders, switches) --- */
+.v-application .primary {
+  background-color: var(--lnl-gold) !important;
+  border-color: var(--lnl-gold) !important;
+}
+
+/* --- Gold accent (active tabs, links, highlighted text/icons) --- */
+.v-application .primary--text {
+  color: var(--lnl-gold) !important;
+  caret-color: var(--lnl-gold) !important;
 }
 
 /* Brand the navigation header title in LNL3D gold. */
