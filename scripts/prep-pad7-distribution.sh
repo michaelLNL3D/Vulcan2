@@ -14,6 +14,8 @@ Usage:
 
 Prepares a BTT Pad7 / Armbian image for distribution before dd + pishrink.
 Dry-run is the default. Wi-Fi profiles are removed last because that can break SSH.
+Dry-run works unprivileged but previews only paths you can read — run
+`sudo ... --dry-run` for the complete picture.
 EOF
 }
 
@@ -46,7 +48,10 @@ if [[ "$EXECUTE" -eq 1 && "$CONFIRM" -ne 1 ]]; then
   exit 2
 fi
 
-if [[ "$ROOT" == "/" && "$ALLOW_NONROOT" != "1" && "${EUID:-$(id -u)}" -ne 0 ]]; then
+# Root is only required to EXECUTE against the real filesystem — dry-run just
+# reads, so it may run unprivileged (the old check contradicted its own error
+# message by rejecting non-root dry-runs too).
+if [[ "$EXECUTE" -eq 1 && "$ROOT" == "/" && "$ALLOW_NONROOT" != "1" && "${EUID:-$(id -u)}" -ne 0 ]]; then
   printf 'Run as root for the real Pad7 filesystem, or use --dry-run first.\n' >&2
   exit 1
 fi
@@ -207,6 +212,13 @@ clean_printer_runtime_data() {
   clear_dir_contents "clear printer_data backups" \
     "$(trim_root /home/biqu/printer_data/backup)"
 
+  # Test prints / uploads must not ship: clear gcodes (including .thumbs) and
+  # any timelapse output. Found testcode.gcode on the golden unit during prep.
+  clear_dir_contents "clear uploaded gcode files" \
+    "$(trim_root /home/biqu/printer_data/gcodes)"
+  clear_dir_contents "clear timelapse output" \
+    "$(trim_root /home/biqu/printer_data/timelapse)"
+
   truncate_file "clear printer logs" \
     "$(trim_root /home/biqu/printer_data/logs/KlipperScreen.log)" \
     "$(trim_root /home/biqu/printer_data/logs/crowsnest.log)" \
@@ -230,10 +242,17 @@ clear_moonraker_history() {
     log_action "clear Moonraker history: skip (curl not found)"
     return 0
   fi
-  log_action "clear Moonraker history: DELETE jobs + reset_totals via $api"
+  log_action "clear Moonraker history: DELETE jobs + POST reset_totals via $api"
   if [[ "$EXECUTE" -eq 1 ]]; then
-    curl -fsS -X DELETE "$api/server/history/job?all=true" >/dev/null 2>&1 || true
-    curl -fsS -X DELETE "$api/server/history/reset_totals" >/dev/null 2>&1 || true
+    # Failures are logged (not silently swallowed): shipping an image with
+    # history intact is a real defect that must be visible in the prep output.
+    curl -fsS -X DELETE "$api/server/history/job?all=true" >/dev/null 2>&1 \
+      || log_action "WARNING: clearing history jobs FAILED (is Moonraker running?)"
+    # NOTE: reset_totals is a POST endpoint — DELETE returns 405 Method Not
+    # Allowed, and with errors swallowed the totals silently shipped in the
+    # image (verified against Moonraker v0.10 on the golden unit).
+    curl -fsS -X POST "$api/server/history/reset_totals" >/dev/null 2>&1 \
+      || log_action "WARNING: resetting history totals FAILED (is Moonraker running?)"
   fi
 }
 
@@ -473,7 +492,12 @@ main() {
   apply_klipperscreen_network_fix
   sync_filesystems
   remove_wifi_last
+  # Second sync: remove_wifi_last deletes files AFTER the first sync — without
+  # this, the very last removals may not be flushed before power-off.
+  sync_filesystems
   log_action "complete"
+  log_action "NOTE: power off now (poweroff) — /tmp cleanup removed Klipper's"
+  log_action "socket/pty, so services must not be reused before the next boot."
 }
 
 main "$@"
