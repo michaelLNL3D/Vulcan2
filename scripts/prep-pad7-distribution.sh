@@ -454,6 +454,71 @@ KSPATCH
   fi
 }
 
+# Silence BTT's stock Wi-Fi provisioning boot spam (idempotent).
+# /boot/scripts/connect_wifi.sh (run from rc.local via btt_init.sh) only checks
+# that a WIFI_SSID line EXISTS in /boot/system.cfg — not that it's non-empty.
+# With the shipped WIFI_SSID='' the unquoted nmcli args shift, and the boot
+# console shows "No network with SSID 'password' found", "unknown connection
+# 'wifi-sec.key-mgmt'", "No connection specified" right before KlipperScreen
+# starts (Env_init silences stdout but NOT stderr). Two-line fix: route stderr
+# to wifi.log, and exit 0 when WIFI_SSID is empty — KlipperScreen-joined Wi-Fi
+# is a NetworkManager profile with autoconnect, so nothing is lost.
+apply_wifi_provision_guard() {
+  local target
+  target="$(trim_root /boot/scripts/connect_wifi.sh)"
+  if [[ ! -f "$target" ]]; then
+    log_action "patch connect_wifi.sh boot spam: skip (not found: $target)"
+    return 0
+  fi
+  if grep -q 'WIFI_SSID empty; skipping wifi provisioning' "$target"; then
+    log_action "patch connect_wifi.sh boot spam: already patched ($target)"
+    return 0
+  fi
+  log_action "patch connect_wifi.sh boot spam: add stderr redirect + empty-SSID guard to $target"
+  if [[ "$EXECUTE" -eq 1 ]]; then
+    python3 - "$target" <<'WIFIPATCH'
+import sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    src = fh.read()
+changed = False
+STDERR_ANCHOR = "log_file=/boot/scripts/wifi.log"
+STDERR_PATCH = (
+    STDERR_ANCHOR
+    + '\n# LNL3D: route errors to the log, not the boot console (stdout was\n'
+    + '# already silenced in Env_init; stderr was not - hence the boot spam).\n'
+    + 'exec 2>> "$log_file"\n'
+)
+if 'exec 2>> "$log_file"' not in src:
+    if STDERR_ANCHOR not in src:
+        sys.stderr.write("WARNING: connect_wifi.sh changed upstream; stderr redirect NOT applied\n")
+        sys.exit(0)
+    src = src.replace(STDERR_ANCHOR, STDERR_PATCH, 1)
+    changed = True
+GUARD_ANCHOR = "source $cfg_file"
+GUARD_PATCH = (
+    GUARD_ANCHOR
+    + '\n# LNL3D: no Wi-Fi configured in system.cfg -> nothing to provision.\n'
+    + '# (Empty WIFI_SSID previously shifted nmcli args and spammed the boot\n'
+    + '# console. KlipperScreen-joined Wi-Fi reconnects via NetworkManager.)\n'
+    + 'if [ -z "${WIFI_SSID}" ]; then\n'
+    + '    echo "$(date) ===> WIFI_SSID empty; skipping wifi provisioning" >> "$log_file"\n'
+    + '    exit 0\n'
+    + 'fi\n'
+)
+if "WIFI_SSID empty; skipping wifi provisioning" not in src:
+    if GUARD_ANCHOR not in src:
+        sys.stderr.write("WARNING: connect_wifi.sh changed upstream; empty-SSID guard NOT applied\n")
+        sys.exit(0)
+    src = src.replace(GUARD_ANCHOR, GUARD_PATCH, 1)
+    changed = True
+if changed:
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(src)
+WIFIPATCH
+  fi
+}
+
 remove_wifi_last() {
   remove_glob "remove NetworkManager Wi-Fi profiles" \
     "$(trim_root '/etc/NetworkManager/system-connections/*.nmconnection')"
@@ -490,6 +555,7 @@ main() {
   reset_machine_identity
   reset_autoexpand
   apply_klipperscreen_network_fix
+  apply_wifi_provision_guard
   sync_filesystems
   remove_wifi_last
   # Second sync: remove_wifi_last deletes files AFTER the first sync — without
