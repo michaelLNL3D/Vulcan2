@@ -1,0 +1,34 @@
+/* LNL3D Mainsail branding (Mainsail 2.x / Vuetify 2).
+   Loaded by Mainsail as .theme/custom.css. Relative url() paths resolve
+   against this file's location (.theme/), so sibling images just work. */
+
+:root {
+  --lnl-gold: #FBB040;
+  --lnl-blue: #1B75BB;
+  --lnl-grey: #939598;
+  --lnl-ink: #1b1b1d;
+}
+
+/* --- Gold accent across the content UI (buttons, progress, sliders, tabs) --- */
+.v-application .primary {
+  background-color: var(--lnl-gold) !important;
+  border-color: var(--lnl-gold) !important;
+}
+.v-application .primary--text {
+  color: var(--lnl-gold) !important;
+  caret-color: var(--lnl-gold) !important;
+}
+
+/* --- Top bar: dark, with a single crisp gold hairline accent --- */
+header.topbar.v-app-bar {
+  border-bottom: 3px solid var(--lnl-gold) !important;
+}
+
+/* --- Signature: faint LNL maker's-mark watermark in the dark canvas --- */
+/* Cards are opaque, so this only whispers through the gutters. */
+.v-application {
+  background-color: #121212 !important;
+  background-image: url("lnl-watermark.png") !important;
+  background-repeat: repeat !important;
+  background-attachment: fixed !important;
+}
